@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 from django.utils.text import slugify
 
 
@@ -28,9 +29,13 @@ class Project(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+        index_together = ('id', 'slug')
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('projects:detail', kwargs={'pk': self.pk, 'slug': self.slug})
 
     def save(self, *args, **kwargs):
         if not self.slug:

@@ -13,8 +13,14 @@
     <title>{% block title %}{% endblock %}</title>
   </head>
   <body>
-    {% block content %}
-    {% endblock content %}
+
+  {% include 'navbar.html' %}
+    <main class="container-fluid">
+        {% block content %}
+
+        {% endblock content %}
+    </main>
+
 
 
     {% block extra_body %}

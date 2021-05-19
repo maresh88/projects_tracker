@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}
+    {{ project.title }}
+{% endblock %}
+{% block content %}
+    {{ project.title }}
+    {{ project.description }}
+    {{ project.get_project_status_display }}
+{% endblock %}
