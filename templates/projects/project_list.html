@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block head_title %}
- My Projects
+    My Projects
 {% endblock %}
 {% block content %}
     <div class="row">
@@ -11,10 +11,29 @@
             {% for project in projects %}
                 <div class="container-sm">
                     <div class="card mb-4">
-                        <div class="card-header" >{{ project.title }}</div>
+                        <div class="card-header">
+                            <div class="row g-0">
+                                <div class="col-9">
+                                    <a href="{% url 'projects:detail' project.id project.slug %}">{{ project.title|truncatechars_html:80 }}</a>
+                                </div>
+                                <div class="col">
+                                    <p class="text-sm-center">Status: <span class="text-danger">{{ project.get_project_status_display }}</span></p>
+                                </div>
+                                <div class="col">
+                                    <i class="far fa-comment-alt pr-1" data-toggle="tooltip" data-placement="top"
+                                       title="total comments"></i>{{ project.comments__count|add:"0" }}
+                                </div>
+                                <div class="col">
+                                    <a href="{% url 'projects:update' project.id project.slug %}">
+                                        <i class="fas fa-pen red-text" data-toggle="tooltip" data-placement="top"
+                                           title="Edit">
+                                        </i></a>
+                                </div>
+                            </div>
+
+                        </div>
                         <div class="card-body text-left">
-                            <a href="{% url 'projects:create' %}">Create</a>
-                            <a href="{% url 'projects:update' project.id project.slug %}">Create</a>
+                            <a href="{% url 'projects:update' project.id project.slug %}">Update</a>
                             {{ project.description }}
                         </div>
                     </div>

@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
 
+from mptt.models import MPTTModel, TreeForeignKey
+
 
 class Project(models.Model):
     PROJECT_STATUS_CHOICE = (
@@ -41,3 +43,27 @@ class Project(models.Model):
         if not self.slug:
             self.slug = slugify(f'{self.author_id}-{self.title}')
         super().save(*args, **kwargs)
+
+
+class Comment(models.Model):
+    project = models.ForeignKey(Project, related_name='comments', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, related_name='comments', on_delete=models.DO_NOTHING)
+    body = models.TextField(blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f'comment \"{self.body}\" by {self.author}'
+
+
+class Profile(MPTTModel):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    parent = TreeForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reports')
+
+    class MPTTMeta:
+        order_insertion_by = ['user']
+
+    def __str__(self):
+        return f'{self.user}'

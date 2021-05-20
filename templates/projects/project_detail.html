@@ -1,9 +1,54 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 {% block title %}
     {{ project.title }}
 {% endblock %}
 {% block content %}
-    {{ project.title }}
-    {{ project.description }}
-    {{ project.get_project_status_display }}
+    <div class="container">
+        <div class="card mb-4 ">
+            <div class="card-body">
+                <h5 class="card-title">{{ project.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ project.get_project_status_display }}</h6>
+                <p class="card-text">{{ project.description }}</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+            </div>
+        </div>
+
+        <div class="container d-flex w-100 h-100 justify-content-center">
+            {% for comment in project.comments.all %}
+                <div class="media-block">
+                    <div class="media-body">
+                        <div class="mar-btm">
+                            <a href="#"
+                               class="btn-link text-semibold media-heading box-inline">by {{ comment.author }}</a>
+                            <p class="text-muted text-sm">- posted at {{ comment.created_at }}</p>
+                        </div>
+                        <div>
+                            {{ comment.body }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div>
+            <div class="container d-flex w-100 h-100 justify-content-center">
+                <form method="post">
+                    {{ comment_form|crispy }}
+                    {% csrf_token %}
+                    <p><input class="btn btn-primary mt-3" type="submit" value="Leave Comment"></p>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+
+
+
+
+
 {% endblock %}
