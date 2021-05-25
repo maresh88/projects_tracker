@@ -14,3 +14,7 @@ class CommentForm(forms.ModelForm):
         widgets = {
             'body': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Add comment here...'})
         }
+
+
+class SearchForm(forms.Form):
+    reporter = forms.CharField(max_length=255)

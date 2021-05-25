@@ -1,12 +1,16 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.db.models import Count
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, FormView
 from django.views.generic.detail import SingleObjectMixin
+from django.core import serializers
+from django.contrib.auth.decorators import login_required
 
 from .models import Project
-from .forms import CommentForm
+from .forms import CommentForm, SearchForm
 
 
 class OwnerMixin(LoginRequiredMixin):
@@ -38,6 +42,11 @@ class ProjectsListView(OwnerAndManagerMixin, ListView):
     model = Project
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super(ProjectsListView, self).get_context_data()
+        context['filter_status'] = Project._meta.get_field('project_status').choices
+        return context
 
     def get_queryset(self):
         return super(ProjectsListView, self).get_queryset().annotate(Count('comments', distinct=True)).order_by(
@@ -92,3 +101,32 @@ class ProjectDetailView(OwnerAndManagerMixin, View):
     def post(self, request, *args, **kwargs):
         view = ProjectComments.as_view()
         return view(request, *args, **kwargs)
+
+
+class ProjectFilterView(ProjectsListView):
+    def get_queryset(self):
+        author = self.request.GET.get('reporter')
+        if not author:
+            author = self.request.user.email
+        qs = super(ProjectFilterView, self).get_queryset().filter(author__email=author,
+                                                                  project_status__in=self.request.GET.getlist('status'),
+                                                                  created_at__year__in=self.request.GET.getlist('year'))
+        return qs
+
+
+@login_required
+def search_reporter(request):
+    if request.is_ajax():
+        form = SearchForm(data=request.GET)
+        if form.is_valid():
+            reporter = form.cleaned_data['reporter']
+            reporter = User.objects.filter(email__contains=reporter,
+                                           profile__in=request.user.profile.get_descendants(include_self=True))[:3]
+            if reporter:
+                print(reporter)
+                data = serializers.serialize('json', reporter, fields=('email',))
+                return JsonResponse(data, safe=False)
+            return JsonResponse({'Not Ok': 'Not Found'})
+        return JsonResponse({'Not OK': 'invalid data'})
+    else:
+        return HttpResponseBadRequest()

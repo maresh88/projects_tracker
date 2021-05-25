@@ -5,7 +5,7 @@
 {% block content %}
     <div class="row">
         <div class="col">
-            1 of 3
+            {% include 'sidebar_left.html' %}
         </div>
         <div class="col-6">
             {% for project in projects %}
@@ -49,6 +49,29 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+
+    <script>
+        const queryString = window.location.search;
+        console.log(queryString);
+        const urlParams = new URLSearchParams(queryString);
+        const product = urlParams.getAll('status')
+        const reporter = urlParams.get('reporter')
+
+        if (reporter) {
+            document.querySelector('#reporter-search').value = reporter
+        }
+
+
+        const status_filter = document.querySelector('#status-filter')
+        for (let item of status_filter.children) {
+            if (product.includes(item.querySelector('input').value)){
+                item.querySelector('input').checked = true
+            }
+        }
+    </script>
+
     <script>
         document.querySelectorAll('.card').forEach(function (item) {
             item.addEventListener('mouseover', function () {
@@ -58,6 +81,54 @@
                 item.classList.remove('shadow', 'bg-white', 'rounded')
             })
         })
+    </script>
+
+    <script>
+        const start_year = 2019
+        let curr_year = new Date().getFullYear()
+        let filter_year = document.querySelector('#filter-by-year')
+        let list = [];
+        for (let i = curr_year; i >= start_year; i--) {
+            let li = document.createElement('li')
+            li.innerHTML = `<div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                name="year" value="${i.toString()}" id="flexCheckDefault">
+                            <label class="form-check-label" for="flexCheckDefault">${i.toString()}</label></div>`
+            filter_year.appendChild(li)
+            if (i === curr_year) {
+                li.querySelector('input').checked = true
+            }
+        }
+
+        let delay;
+        let search_btn = document.querySelector('#reporter-search')
+        let datalist = document.querySelector('#datalistOptions')
+        search_btn.addEventListener('keyup', function () {
+            clearTimeout(delay)
+            if (search_btn.value.length > 2) {
+                delay = setTimeout(function () {
+                    $.ajax({
+                        url: '/search/reporter/',
+                        data: {
+                            'reporter': search_btn.value
+                        },
+                        dataType: 'json',
+                        success: function (data) {
+                            datalist.innerHTML = ''
+
+                            Object.entries(JSON.parse(data)).forEach((entry) => {
+                                let option_tag = document.createElement('option')
+                                const [key, value] = entry;
+                                option_tag.value = value.fields.email
+                                datalist.appendChild(option_tag)
+                                ;
+                            });
+                        }
+                    });
+                }, 500)
+            }
+        })
+
     </script>
 
 {% endblock %}
