@@ -1,15 +1,14 @@
 import debug_toolbar
-
 from django.contrib import admin
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
-
+from django.urls import include, path
 
 urlpatterns = [
+    path('profiles/', include('profiles.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
-    path('', include('projects.urls', namespace='projects')),
+    path('projects/', include('projects.urls', namespace='projects')),
 
+    # debug_toolbar
     path('__debug__/', include(debug_toolbar.urls)),
 ]
 

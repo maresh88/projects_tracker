@@ -4,6 +4,7 @@ from .models import Comment
 
 
 class CommentForm(forms.ModelForm):
+    """ Comment form on project detail view"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['body'].label = False
@@ -16,5 +17,3 @@ class CommentForm(forms.ModelForm):
         }
 
 
-class SearchForm(forms.Form):
-    reporter = forms.CharField(max_length=255)

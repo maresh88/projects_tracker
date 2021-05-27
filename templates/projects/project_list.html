@@ -41,7 +41,6 @@
             {% endfor %}
         </div>
         <div class="col">
-            3 of 3
         </div>
     </div>
 
@@ -53,26 +52,7 @@
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 
     <script>
-        const queryString = window.location.search;
-        console.log(queryString);
-        const urlParams = new URLSearchParams(queryString);
-        const product = urlParams.getAll('status')
-        const reporter = urlParams.get('reporter')
-
-        if (reporter) {
-            document.querySelector('#reporter-search').value = reporter
-        }
-
-
-        const status_filter = document.querySelector('#status-filter')
-        for (let item of status_filter.children) {
-            if (product.includes(item.querySelector('input').value)){
-                item.querySelector('input').checked = true
-            }
-        }
-    </script>
-
-    <script>
+        // adding shadow to project card on mouseover
         document.querySelectorAll('.card').forEach(function (item) {
             item.addEventListener('mouseover', function () {
                 item.classList.add('shadow', 'bg-white', 'rounded')
@@ -84,9 +64,10 @@
     </script>
 
     <script>
+        // auto-fill years for the filter
         const start_year = 2019
-        let curr_year = new Date().getFullYear()
-        let filter_year = document.querySelector('#filter-by-year')
+        const curr_year = new Date().getFullYear()
+        const filter_year = document.querySelector('#filter-year')
         let list = [];
         for (let i = curr_year; i >= start_year; i--) {
             let li = document.createElement('li')
@@ -95,22 +76,55 @@
                                 name="year" value="${i.toString()}" id="flexCheckDefault">
                             <label class="form-check-label" for="flexCheckDefault">${i.toString()}</label></div>`
             filter_year.appendChild(li)
-            if (i === curr_year) {
-                li.querySelector('input').checked = true
+        }
+    </script>
+
+
+    <script>
+        // prefill filter by url params
+        const urlParams = new URLSearchParams(window.location.search)
+        const status = urlParams.getAll('status')
+        const reporter = urlParams.get('reporter')
+        const year = urlParams.getAll('year')
+
+        // prefill status
+        if (status) {
+            const status_filter = document.querySelector('#filter-status')
+            for (let item of status_filter.children) {
+                if (status.includes(item.querySelector('input').value)) {
+                    item.querySelector('input').checked = true
+                }
             }
         }
 
+        // prefill reporter email
+        if (reporter) {
+            document.querySelector('#reporter-search').value = reporter
+        }
+
+        // prefill years
+        if (year) {
+            for (let item of filter_year.children) {
+                if (year.includes(item.querySelector('input').value)) {
+                    item.querySelector('input').checked = true
+                }
+            }
+        }
+    </script>
+
+    <script>
+        // ajax request to 'profiles:search_reporter' to get reporter email by user input
         let delay;
-        let search_btn = document.querySelector('#reporter-search')
+        let search_input = document.querySelector('#reporter-search')
         let datalist = document.querySelector('#datalistOptions')
-        search_btn.addEventListener('keyup', function () {
+        search_input.addEventListener('keyup', function () {
             clearTimeout(delay)
-            if (search_btn.value.length > 2) {
+            if (search_input.value.length > 2) {
                 delay = setTimeout(function () {
                     $.ajax({
-                        url: '/search/reporter/',
+                        url: "{% url 'profiles:search_reporter'%}",
                         data: {
-                            'reporter': search_btn.value
+                            'reporter': search_input.value
                         },
                         dataType: 'json',
                         success: function (data) {
@@ -128,7 +142,6 @@
                 }, 500)
             }
         })
-
     </script>
 
 {% endblock %}

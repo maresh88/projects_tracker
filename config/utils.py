@@ -1,5 +1,9 @@
-import os
+"""
+This module is used to store sensitive data in a local JSON file, not in code.
+"""
+
 import json
+import os
 
 from django.core.exceptions import ImproperlyConfigured
 

@@ -3,7 +3,6 @@ from pathlib import Path
 
 from .utils import get_secret_data
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,6 +30,7 @@ INSTALLED_APPS = [
 
     # apps
     'projects',
+    'profiles',
 
     # libs
     'crispy_forms',
@@ -129,9 +129,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ADDITIONAL SETTINGS
+
 # crispy form
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+# debug_toolbar
 INTERNAL_IPS = [
     '127.0.0.1',
 ]

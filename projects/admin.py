@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Project, Profile, Comment
-from mptt.admin import MPTTModelAdmin
+
+
+from .models import Comment, Project
 
 
 class CommentInline(admin.StackedInline):
@@ -9,7 +10,7 @@ class CommentInline(admin.StackedInline):
 
 
 @admin.register(Project)
-class GoalAdmin(admin.ModelAdmin):
+class ProjectAdmin(admin.ModelAdmin):
     list_display = ('id', 'author', 'title', 'slug',
                     'description', 'created_at', 'updated_at',
                     'project_status', 'is_active')
@@ -18,6 +19,3 @@ class GoalAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description')
     ordering = ('-updated_at',)
     inlines = [CommentInline, ]
-
-
-admin.site.register(Profile, MPTTModelAdmin)

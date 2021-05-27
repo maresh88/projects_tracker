@@ -1,31 +1,31 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import User
 from django.db.models import Count
-from django.http import JsonResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, FormView
+from django.views.generic import (CreateView, DetailView, FormView, ListView,
+                                  UpdateView)
 from django.views.generic.detail import SingleObjectMixin
-from django.core import serializers
-from django.contrib.auth.decorators import login_required
 
+from .forms import CommentForm
 from .models import Project
-from .forms import CommentForm, SearchForm
 
 
 class OwnerMixin(LoginRequiredMixin):
+    """Get user projects"""
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(author=self.request.user)
 
 
-class OwnerAndManagerMixin(LoginRequiredMixin):
+class ManagerAndReportersMixin(LoginRequiredMixin):
+    """Get all projects that user have access to, including user reporters projects through mptt"""
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(author__profile__in=self.request.user.profile.get_descendants(include_self=True))
 
 
 class OwnerMixinEdit(OwnerMixin):
+    """Mixin that allows only the project's author to make changes and create a new one"""
     model = Project
     template_name = 'projects/project_create_update.html'
     fields = ['title', 'description', 'project_status']
@@ -38,17 +38,21 @@ class OwnerMixinEdit(OwnerMixin):
         return reverse('projects:detail', kwargs={'pk': self.object.pk, 'slug': self.object.slug})
 
 
-class ProjectsListView(OwnerAndManagerMixin, ListView):
+class ProjectsListView(ManagerAndReportersMixin, ListView):
+    """Get list of projects"""
     model = Project
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(ProjectsListView, self).get_context_data()
+
+        # collect available choices from Project model
         context['filter_status'] = Project._meta.get_field('project_status').choices
         return context
 
     def get_queryset(self):
+        """Get projects with the number of comments for each of them"""
         return super(ProjectsListView, self).get_queryset().annotate(Count('comments', distinct=True)).order_by(
             '-created_at')
 
@@ -62,6 +66,7 @@ class ProjectUpdateView(OwnerMixinEdit, UpdateView):
 
 
 class ProjectDisplay(DetailView):
+    """Get project view with comments"""
     model = Project
     context_object_name = 'project'
     template_name = 'projects/project_detail.html'
@@ -76,6 +81,7 @@ class ProjectDisplay(DetailView):
 
 
 class ProjectComments(SingleObjectMixin, FormView):
+    """Leave a comment on project view"""
     model = Project
     template_name = 'projects/project_detail.html'
     form_class = CommentForm
@@ -92,7 +98,7 @@ class ProjectComments(SingleObjectMixin, FormView):
         return reverse('projects:detail', kwargs={'pk': self.obj.pk, 'slug': self.obj.slug})
 
 
-class ProjectDetailView(OwnerAndManagerMixin, View):
+class ProjectDetailView(ManagerAndReportersMixin, View):
 
     def get(self, request, *args, **kwargs):
         view = ProjectDisplay.as_view()
@@ -104,6 +110,7 @@ class ProjectDetailView(OwnerAndManagerMixin, View):
 
 
 class ProjectFilterView(ProjectsListView):
+    """Filtering projects by year, status and author"""
     def get_queryset(self):
         author = self.request.GET.get('reporter')
         if not author:
@@ -113,20 +120,3 @@ class ProjectFilterView(ProjectsListView):
                                                                   created_at__year__in=self.request.GET.getlist('year'))
         return qs
 
-
-@login_required
-def search_reporter(request):
-    if request.is_ajax():
-        form = SearchForm(data=request.GET)
-        if form.is_valid():
-            reporter = form.cleaned_data['reporter']
-            reporter = User.objects.filter(email__contains=reporter,
-                                           profile__in=request.user.profile.get_descendants(include_self=True))[:3]
-            if reporter:
-                print(reporter)
-                data = serializers.serialize('json', reporter, fields=('email',))
-                return JsonResponse(data, safe=False)
-            return JsonResponse({'Not Ok': 'Not Found'})
-        return JsonResponse({'Not OK': 'invalid data'})
-    else:
-        return HttpResponseBadRequest()
